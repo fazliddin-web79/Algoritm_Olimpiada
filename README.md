@@ -48,7 +48,7 @@ cp .env.example .env
 
 ```dotenv
 BOT_TOKEN=BotFather_bergan_token
-ADMIN_IDS=123456789
+ADMIN_IDS=2041008827
 DATABASE_PATH=bot.db
 ```
 
@@ -59,6 +59,10 @@ ADMIN_IDS=123456789,987654321
 ```
 
 `.env` Git'ga yuklanmaydi.
+
+`2041008827` asosiy administrator sifatida kodda ham himoyalangan. `ADMIN_IDS`
+orqali boshqa administratorlarni qo'shish mumkin, ammo asosiy administrator o'chib
+ketmaydi.
 
 ## 5. Python virtual muhit yaratish
 
@@ -160,6 +164,26 @@ SQLite bazasi saqlanib qolishi uchun eng yaxshi bepul variant kichik VM serverdi
 [deploy/DEPLOY_ORACLE_FREE.md](deploy/DEPLOY_ORACLE_FREE.md)
 
 Serverda bot `systemd` orqali avtomatik ishga tushadi va server qayta yoqilganda ham tiklanadi.
+
+## Railway'da doimiy baza
+
+Railway servisiga Volume qo'shing va uni `/data` manziliga ulang. Variables
+bo'limida quyidagilar bo'lishi kerak:
+
+```dotenv
+BOT_TOKEN=BotFather_bergan_token
+ADMIN_IDS=2041008827
+DATABASE_PATH=/data/bot.db
+```
+
+Eski ro'yxatdan o'tganlar saqlanishi uchun lokal `bot.db` faylini Railway
+Volume ichidagi `/data/bot.db` manziliga bir marta xavfsiz yuklash kerak.
+`bot.db` ichida o'quvchi va ota-onalarning shaxsiy ma'lumotlari borligi sababli
+u GitHub'ga yuklanmaydi.
+
+Bir bot tokeni bilan faqat bitta long-polling nusxa ishlashi kerak. Railway bot
+ishlayotganda lokal nusxani to'xtating, aks holda Telegram `Conflict` xatosini
+qaytaradi.
 
 ## Tekshiruvlar
 

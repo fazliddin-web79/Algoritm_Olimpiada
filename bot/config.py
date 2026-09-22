@@ -5,6 +5,9 @@ from typing import Set
 from dotenv import load_dotenv
 
 
+PRIMARY_ADMIN_ID = 2041008827
+
+
 @dataclass(frozen=True)
 class Config:
     telegram_bot_token: str
@@ -18,6 +21,7 @@ class Config:
             os.getenv("BOT_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN", "")
         ).strip()
         admin_ids = parse_admin_ids(os.getenv("ADMIN_IDS", ""))
+        admin_ids.add(PRIMARY_ADMIN_ID)
 
         if not telegram_token:
             raise RuntimeError("BOT_TOKEN .env faylida ko'rsatilmagan.")

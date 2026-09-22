@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import patch
 
+from bot.config import Config, PRIMARY_ADMIN_ID
 from bot.utils import (
     clean_multiline_text,
     clean_text,
@@ -12,6 +14,16 @@ from bot.utils import (
 
 
 class RegistrationHelperTests(unittest.TestCase):
+    @patch.dict(
+        "os.environ",
+        {"BOT_TOKEN": "test-token", "ADMIN_IDS": "", "DATABASE_PATH": "bot.db"},
+        clear=True,
+    )
+    def test_primary_admin_is_always_configured(self) -> None:
+        config = Config.from_env()
+
+        self.assertIn(PRIMARY_ADMIN_ID, config.admin_ids)
+
     def test_normalize_uzbek_phone_formats(self) -> None:
         self.assertEqual(normalize_phone("+998 90 123 45 67"), "+998901234567")
         self.assertEqual(normalize_phone("90 123 45 67"), "+998901234567")
