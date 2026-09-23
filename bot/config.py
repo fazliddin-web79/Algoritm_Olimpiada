@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 
 PRIMARY_ADMIN_ID = 2041008827
+DEFAULT_REQUIRED_CHANNEL = "@algoritm_school_oltiariq"
 
 
 @dataclass(frozen=True)
@@ -13,6 +14,7 @@ class Config:
     telegram_bot_token: str
     database_path: str
     admin_ids: Set[int]
+    required_channel: str
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -30,6 +32,10 @@ class Config:
             telegram_bot_token=telegram_token,
             database_path=os.getenv("DATABASE_PATH", "bot.db").strip(),
             admin_ids=admin_ids,
+            required_channel=(
+                os.getenv("REQUIRED_CHANNEL", DEFAULT_REQUIRED_CHANNEL).strip()
+                or DEFAULT_REQUIRED_CHANNEL
+            ),
         )
 
 

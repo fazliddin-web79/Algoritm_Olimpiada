@@ -1,10 +1,32 @@
 from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     KeyboardButton,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
 )
 
 from bot.constants import GRADES, OLYMPIAD_LOCATIONS
+
+
+def subscription_keyboard(channel: str) -> InlineKeyboardMarkup:
+    username = channel.lstrip("@")
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Kanalga qo'shilish",
+                    url=f"https://t.me/{username}",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="A'zolikni tekshirish",
+                    callback_data="check_subscription",
+                )
+            ],
+        ]
+    )
 
 
 def registration_keyboard() -> ReplyKeyboardMarkup:

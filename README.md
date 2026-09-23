@@ -50,6 +50,7 @@ cp .env.example .env
 BOT_TOKEN=BotFather_bergan_token
 ADMIN_IDS=2041008827
 DATABASE_PATH=bot.db
+REQUIRED_CHANNEL=@algoritm_school_oltiariq
 ```
 
 Bir nechta admin bo'lsa, vergul bilan yozing:
@@ -63,6 +64,10 @@ ADMIN_IDS=123456789,987654321
 `2041008827` asosiy administrator sifatida kodda ham himoyalangan. `ADMIN_IDS`
 orqali boshqa administratorlarni qo'shish mumkin, ammo asosiy administrator o'chib
 ketmaydi.
+
+Bot `/start` dan keyin foydalanuvchining `REQUIRED_CHANNEL` kanaliga a'zoligini
+tekshiradi. Telegram a'zolik ma'lumotini qaytarishi uchun botni shu kanalga
+administrator qilib qo'yish kerak.
 
 ## 5. Python virtual muhit yaratish
 
@@ -174,6 +179,7 @@ bo'limida quyidagilar bo'lishi kerak:
 BOT_TOKEN=BotFather_bergan_token
 ADMIN_IDS=2041008827
 DATABASE_PATH=/data/bot.db
+REQUIRED_CHANNEL=@algoritm_school_oltiariq
 ```
 
 Eski ro'yxatdan o'tganlar saqlanishi uchun lokal `bot.db` faylini Railway

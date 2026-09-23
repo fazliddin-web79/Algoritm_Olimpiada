@@ -1,7 +1,11 @@
 import unittest
 from unittest.mock import patch
 
-from bot.config import Config, PRIMARY_ADMIN_ID
+from aiogram.enums import ChatMemberStatus
+
+from bot.config import Config, DEFAULT_REQUIRED_CHANNEL, PRIMARY_ADMIN_ID
+from bot.keyboards import subscription_keyboard
+from bot.subscription import has_active_membership
 from bot.utils import (
     clean_multiline_text,
     clean_text,
@@ -23,6 +27,27 @@ class RegistrationHelperTests(unittest.TestCase):
         config = Config.from_env()
 
         self.assertIn(PRIMARY_ADMIN_ID, config.admin_ids)
+        self.assertEqual(config.required_channel, DEFAULT_REQUIRED_CHANNEL)
+
+    def test_subscription_membership_statuses(self) -> None:
+        self.assertTrue(has_active_membership(ChatMemberStatus.MEMBER))
+        self.assertTrue(has_active_membership(ChatMemberStatus.ADMINISTRATOR))
+        self.assertTrue(has_active_membership(ChatMemberStatus.CREATOR))
+        self.assertTrue(has_active_membership(ChatMemberStatus.RESTRICTED, True))
+        self.assertFalse(has_active_membership(ChatMemberStatus.LEFT))
+        self.assertFalse(has_active_membership(ChatMemberStatus.KICKED))
+
+    def test_subscription_keyboard_uses_configured_channel(self) -> None:
+        keyboard = subscription_keyboard("@algoritm_school_oltiariq")
+
+        self.assertEqual(
+            keyboard.inline_keyboard[0][0].url,
+            "https://t.me/algoritm_school_oltiariq",
+        )
+        self.assertEqual(
+            keyboard.inline_keyboard[1][0].callback_data,
+            "check_subscription",
+        )
 
     def test_normalize_uzbek_phone_formats(self) -> None:
         self.assertEqual(normalize_phone("+998 90 123 45 67"), "+998901234567")

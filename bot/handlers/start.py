@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 
 from bot.config import Config
 from bot.constants import GRADES, OLYMPIAD_LOCATIONS, TEST_QUESTION_COUNT, UNKNOWN_SOURCE
@@ -15,8 +15,10 @@ from bot.keyboards import (
     registered_user_keyboard,
     registration_keyboard,
     remove_keyboard,
+    subscription_keyboard,
 )
 from bot.registration import build_registration_input
+from bot.subscription import is_channel_member
 from bot.utils import (
     clean_text,
     confirmation_text,
@@ -56,11 +58,62 @@ async def start(
     command: CommandObject,
     state: FSMContext,
     database: Database,
+    config: Config,
 ) -> None:
     if message.from_user is None:
         return
     await state.clear()
-    existing = await database.get_by_telegram_id(message.from_user.id)
+    source = clean_text(command.args or UNKNOWN_SOURCE, 60) or UNKNOWN_SOURCE
+    await state.update_data(source=source)
+    if not await require_channel_membership(message, message.from_user.id, config):
+        return
+    await show_start_menu(message, message.from_user.id, state, database)
+
+
+@router.callback_query(F.data == "check_subscription")
+async def check_subscription(
+    callback: CallbackQuery,
+    state: FSMContext,
+    database: Database,
+    config: Config,
+) -> None:
+    if callback.message is None:
+        await callback.answer()
+        return
+    membership = await is_channel_member(
+        callback.bot,
+        config.required_channel,
+        callback.from_user.id,
+    )
+    if membership is True:
+        await callback.answer("A'zolik tasdiqlandi.")
+        await callback.message.edit_text("Kanalga a'zolik tasdiqlandi.")
+        await show_start_menu(
+            callback.message,
+            callback.from_user.id,
+            state,
+            database,
+        )
+        return
+    if membership is None:
+        await callback.answer(
+            "Tekshiruvda xatolik. Bot kanal administratori ekanini tekshiring.",
+            show_alert=True,
+        )
+        return
+    await callback.answer(
+        "Avval kanalga qo'shiling, keyin yana tekshiring.",
+        show_alert=True,
+    )
+
+
+async def show_start_menu(
+    message: Message,
+    user_id: int,
+    state: FSMContext,
+    database: Database,
+) -> None:
+    existing = await database.get_by_telegram_id(user_id)
     if existing:
         await message.answer(
             "Siz avval ro'yxatdan o'tgansiz.\n\n"
@@ -75,9 +128,31 @@ async def start(
         )
         return
 
-    source = clean_text(command.args or UNKNOWN_SOURCE, 60) or UNKNOWN_SOURCE
-    await state.update_data(source=source)
     await message.answer(WELCOME_TEXT, reply_markup=registration_keyboard())
+
+
+async def require_channel_membership(
+    message: Message,
+    user_id: int,
+    config: Config,
+) -> bool:
+    membership = await is_channel_member(
+        message.bot,
+        config.required_channel,
+        user_id,
+    )
+    if membership is True:
+        return True
+    error_text = (
+        "A'zolikni hozir tekshirib bo'lmadi. Iltimos, birozdan keyin qayta urinib ko'ring."
+        if membership is None
+        else "Botdan foydalanish uchun avval Telegram kanalimizga qo'shiling."
+    )
+    await message.answer(
+        error_text,
+        reply_markup=subscription_keyboard(config.required_channel),
+    )
+    return False
 
 
 @router.message(F.text == "Sinov javoblarini jo'natish")
@@ -85,8 +160,11 @@ async def begin_test_answers(
     message: Message,
     state: FSMContext,
     database: Database,
+    config: Config,
 ) -> None:
     if message.from_user is None:
+        return
+    if not await require_channel_membership(message, message.from_user.id, config):
         return
     registration = await database.get_by_telegram_id(message.from_user.id)
     if not registration:
@@ -106,7 +184,15 @@ async def begin_test_answers(
 
 
 @router.message(F.text == "Ro'yxatdan o'tish")
-async def begin_registration(message: Message, state: FSMContext) -> None:
+async def begin_registration(
+    message: Message,
+    state: FSMContext,
+    config: Config,
+) -> None:
+    if message.from_user is None:
+        return
+    if not await require_channel_membership(message, message.from_user.id, config):
+        return
     await state.set_state(RegistrationStates.parent_full_name)
     await message.answer(
         "Ota-ona yoki mas'ul shaxsning ism-familiyasini yozing:",
@@ -220,7 +306,11 @@ async def restart_registration(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
     await state.clear()
     await state.update_data(source=data.get("source", UNKNOWN_SOURCE))
-    await begin_registration(message, state)
+    await state.set_state(RegistrationStates.parent_full_name)
+    await message.answer(
+        "Ota-ona yoki mas'ul shaxsning ism-familiyasini yozing:",
+        reply_markup=remove_keyboard(),
+    )
 
 
 @router.message(RegistrationStates.confirmation, F.text == "Tasdiqlayman")

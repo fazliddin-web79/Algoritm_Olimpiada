@@ -7,6 +7,7 @@ from bot.constants import (
     OLYMPIAD_LOCATIONS,
     OLYMPIAD_SCHEDULES,
     TEST_QUESTION_COUNT,
+    UNKNOWN_SOURCE,
 )
 
 
@@ -129,6 +130,6 @@ def confirmation_text(data: Dict[str, Any]) -> str:
         f"Mahalla/hudud: {data['neighborhood']}\n"
         f"Olimpiada manzili: {data['olympiad_location']}"
         f"{olympiad_schedule_text(data['olympiad_location'])}\n"
-        f"Reklama manbasi: {data['source']}\n\n"
+        f"Reklama manbasi: {data.get('source', UNKNOWN_SOURCE)}\n\n"
         f"{CONSENT_TEXT}"
     )
